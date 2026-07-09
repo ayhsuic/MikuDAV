@@ -23,6 +23,10 @@ func main() {
 	defer pool.Close()
 	fmt.Println("PostgreSQL 连接成功")
 
+	if err := initDB(pool); err != nil {
+		log.Fatalf("数据库初始化失败: %v", err)
+	}
+
 	http.HandleFunc("/api/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprintf(w, `{"status":"ok"}`)
