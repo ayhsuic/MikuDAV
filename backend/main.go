@@ -13,7 +13,7 @@ import (
 func main() {
 	databaseURL := os.Getenv("DATABASE_URL")
 	if databaseURL == "" {
-		log.Fatal("缺少环境变量 DATABASE_URL，请设置后重试")
+		log.Fatal("缺少环境变量 DATABASE_URL")
 	}
 
 	pool, err := pgxpool.New(context.Background(), databaseURL)
@@ -32,9 +32,19 @@ func main() {
 		fmt.Fprintf(w, `{"status":"ok"}`)
 	})
 
+	http.HandleFunc("/api/scan/start", func(w http.ResponseWriter, r *http.Request) {
+		go func() {
+			if err := ScanLibrary(pool); err != nil {
+				log.Printf("扫描失败: %v", err)
+			}
+		}()
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"message":"扫描已开始"}`)
+	})
+
 	port := os.Getenv("PORT")
 	if port == "" {
-		log.Fatal("缺少环境变量 PORT，请设置后重试")
+		log.Fatal("缺少环境变量 PORT")
 	}
 	fmt.Printf("后端服务启动于 http://localhost:%s\n", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
